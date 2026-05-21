@@ -11,11 +11,13 @@ import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import com.alarmapp.domain.repository.AlarmRepository
+import com.alarmapp.receiver.AlarmReceiver
 import com.alarmapp.ui.alarmring.AlarmRingActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +33,7 @@ class AlarmService : Service() {
     private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
     private var currentAlarmId: Long = -1L
+    private var keepAwake: PowerManager.WakeLock? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -42,6 +45,11 @@ class AlarmService : Service() {
             @Suppress("DEPRECATION")
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        keepAwake = pm.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+            "AlarmApp:AlarmService"
+        )
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -49,6 +57,8 @@ class AlarmService : Service() {
 
         val alarmId = intent?.getLongExtra("alarm_id", -1L) ?: -1L
         currentAlarmId = alarmId
+
+        keepAwake?.acquire(60_000L)
 
         showNotification("Alarm")
 
@@ -59,6 +69,8 @@ class AlarmService : Service() {
         }
 
         startAlarm()
+
+        AlarmReceiver.releaseWakeLock()
 
         return START_NOT_STICKY
     }
@@ -134,6 +146,7 @@ class AlarmService : Service() {
         }
         mediaPlayer = null
         vibrator?.cancel()
+        keepAwake?.takeIf { it.isHeld }?.release()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -144,6 +157,7 @@ class AlarmService : Service() {
         mediaPlayer?.release()
         mediaPlayer = null
         vibrator?.cancel()
+        keepAwake?.takeIf { it.isHeld }?.release()
         super.onDestroy()
     }
 

@@ -25,16 +25,19 @@ class ScheduleAlarm @Inject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val alarmClockInfo = AlarmManager.AlarmClockInfo(
+            triggerTimeMillis,
+            pendingIntent
+        )
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP, triggerTimeMillis, pendingIntent
-                )
+                alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
             } else {
-                alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTimeMillis, pendingIntent)
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTimeMillis, pendingIntent)
             }
         } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTimeMillis, pendingIntent)
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
         }
     }
 

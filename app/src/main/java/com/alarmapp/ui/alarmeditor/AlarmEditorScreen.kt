@@ -209,6 +209,7 @@ fun AlarmEditorScreen(
 private fun RecurrenceTypeSelector(selected: RecurrenceType, onSelect: (RecurrenceType) -> Unit) {
     Column {
         listOf(
+            RecurrenceType.ONE_TIME to "Once",
             RecurrenceType.DAYS_OF_WEEK to "Custom days",
             RecurrenceType.WEEKDAYS to "Weekdays (Mon-Fri)",
             RecurrenceType.MONTHLY_NTH_DAY to "Monthly"

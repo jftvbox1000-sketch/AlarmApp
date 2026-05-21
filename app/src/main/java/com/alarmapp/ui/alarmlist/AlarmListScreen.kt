@@ -100,6 +100,7 @@ private fun AlarmCard(alarm: Alarm, onToggle: () -> Unit, onClick: () -> Unit, o
     }
     val recurrenceStr = when {
         alarm.specificDate != null -> null
+        alarm.recurrenceType.name == "ONE_TIME" -> "Once"
         alarm.recurrenceType.name == "WEEKDAYS" -> "Weekdays"
         alarm.recurrenceType.name == "DAYS_OF_WEEK" && alarm.daysOfWeek.isNotEmpty() ->
             alarm.daysOfWeek.joinToString(", ") { it.name.take(3) }
