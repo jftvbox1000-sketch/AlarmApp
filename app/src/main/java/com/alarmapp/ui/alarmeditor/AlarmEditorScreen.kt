@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -190,6 +191,21 @@ fun AlarmEditorScreen(
                 }
             } else {
                 Text("This alarm will fire once on the selected date.", style = MaterialTheme.typography.bodySmall)
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Skip holidays",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Switch(
+                    checked = state.skipHolidays,
+                    onCheckedChange = { viewModel.updateSkipHolidays(it) }
+                )
             }
 
             Spacer(Modifier.height(16.dp))

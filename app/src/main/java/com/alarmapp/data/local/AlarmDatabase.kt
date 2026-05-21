@@ -25,7 +25,7 @@ class Converters {
     }
 }
 
-@Database(entities = [AlarmEntity::class, PublicHolidayEntity::class], version = 1, exportSchema = false)
+@Database(entities = [AlarmEntity::class, PublicHolidayEntity::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AlarmDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao

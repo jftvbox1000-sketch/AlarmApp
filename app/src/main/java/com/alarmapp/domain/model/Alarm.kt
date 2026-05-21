@@ -12,6 +12,7 @@ data class Alarm(
     val recurrenceType: RecurrenceType = RecurrenceType.ONE_TIME,
     val daysOfWeek: Set<DayOfWeek> = emptySet(),
     val dayOfMonth: Int? = null,
+    val skipHolidays: Boolean = true,
     val createdAt: Long = System.currentTimeMillis()
 ) {
     val isRecurring: Boolean get() = specificDate == null

@@ -14,5 +14,6 @@ data class AlarmEntity(
     val recurrenceType: String = "ONE_TIME",
     val daysOfWeek: String = "",
     val dayOfMonth: Int? = null,
+    val skipHolidays: Boolean = true,
     val createdAt: Long = System.currentTimeMillis()
 )

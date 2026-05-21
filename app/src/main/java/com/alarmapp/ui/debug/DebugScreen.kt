@@ -28,7 +28,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.alarmapp.util.AlarmPermissionHelper
 import com.alarmapp.util.DebugLogEntry
 import com.alarmapp.util.InAppDebugLogger
 import com.alarmapp.util.LogLevel
@@ -72,8 +74,16 @@ fun DebugScreen(onNavigateBack: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Logs: ${logs.size}", style = MaterialTheme.typography.labelSmall)
-                Button(onClick = { logs = InAppDebugLogger.getLogs() }) {
-                    Text("Refresh")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val context = LocalContext.current
+                    Button(onClick = {
+                        context.startActivity(AlarmPermissionHelper.getExactAlarmPermissionIntent(context))
+                    }) {
+                        Text("Exact Alarm Permission")
+                    }
+                    Button(onClick = { logs = InAppDebugLogger.getLogs() }) {
+                        Text("Refresh")
+                    }
                 }
             }
 

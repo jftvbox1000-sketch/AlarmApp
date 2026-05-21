@@ -31,6 +31,7 @@ class AlarmReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        val pendingResult = goAsync()
         try {
             InAppDebugLogger.log("AlarmReceiver", "onReceive called: action=${intent.action}")
             Timber.d("AlarmReceiver.onReceive called: %s", intent.action)
@@ -39,6 +40,7 @@ class AlarmReceiver : BroadcastReceiver() {
             if (alarmId == -1L) {
                 InAppDebugLogger.log("AlarmReceiver", "Invalid alarm_id received", com.alarmapp.util.LogLevel.ERROR)
                 Timber.w("Received alarm intent with invalid alarm_id")
+                pendingResult.finish()
                 return
             }
 
@@ -52,10 +54,12 @@ class AlarmReceiver : BroadcastReceiver() {
             }
             context.startForegroundService(serviceIntent)
             InAppDebugLogger.log("AlarmReceiver", "Started AlarmService for alarm_id=$alarmId")
+            pendingResult.finish()
         } catch (e: Exception) {
             InAppDebugLogger.logError("AlarmReceiver", "Error in onReceive", e)
             Timber.e(e, "Error in AlarmReceiver.onReceive")
             releaseWakeLock()
+            pendingResult.finish()
         }
     }
 }

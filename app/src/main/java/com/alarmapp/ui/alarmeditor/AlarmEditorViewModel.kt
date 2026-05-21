@@ -24,6 +24,7 @@ data class AlarmEditorUiState(
     val recurrenceType: RecurrenceType = RecurrenceType.ONE_TIME,
     val daysOfWeek: Set<DayOfWeek> = emptySet(),
     val dayOfMonth: Int? = null,
+    val skipHolidays: Boolean = true,
     val isEnabled: Boolean = true,
     val isEditing: Boolean = false,
     val isSaving: Boolean = false
@@ -55,6 +56,7 @@ class AlarmEditorViewModel @Inject constructor(
                     recurrenceType = alarm.recurrenceType,
                     daysOfWeek = alarm.daysOfWeek,
                     dayOfMonth = alarm.dayOfMonth,
+                    skipHolidays = alarm.skipHolidays,
                     isEnabled = alarm.isEnabled,
                     isEditing = true
                 )
@@ -69,6 +71,7 @@ class AlarmEditorViewModel @Inject constructor(
     fun updateRecurrenceType(type: RecurrenceType) { _uiState.update { it.copy(recurrenceType = type) } }
     fun updateDaysOfWeek(days: Set<DayOfWeek>) { _uiState.update { it.copy(daysOfWeek = days) } }
     fun updateDayOfMonth(day: Int?) { _uiState.update { it.copy(dayOfMonth = day?.coerceIn(1, 31)) } }
+    fun updateSkipHolidays(value: Boolean) { _uiState.update { it.copy(skipHolidays = value) } }
 
     fun save(onSaved: () -> Unit) {
         viewModelScope.launch {
@@ -83,7 +86,8 @@ class AlarmEditorViewModel @Inject constructor(
                 isEnabled = state.isEnabled,
                 recurrenceType = state.recurrenceType,
                 daysOfWeek = state.daysOfWeek,
-                dayOfMonth = state.dayOfMonth
+                dayOfMonth = state.dayOfMonth,
+                skipHolidays = state.skipHolidays
             )
             val id = if (existingId != null) {
                 alarmRepository.updateAlarm(alarm)

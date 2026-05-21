@@ -52,6 +52,7 @@ class AlarmRepositoryImpl @Inject constructor(
             daysOfWeek = if (daysOfWeek.isBlank()) emptySet()
                 else daysOfWeek.split(",").map { DayOfWeek.valueOf(it.trim()) }.toSet(),
             dayOfMonth = dayOfMonth,
+            skipHolidays = skipHolidays,
             createdAt = createdAt
         )
     }
@@ -67,6 +68,7 @@ class AlarmRepositoryImpl @Inject constructor(
             recurrenceType = recurrenceType.name,
             daysOfWeek = daysOfWeek.joinToString(",") { it.name },
             dayOfMonth = dayOfMonth,
+            skipHolidays = skipHolidays,
             createdAt = createdAt
         )
     }

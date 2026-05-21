@@ -48,9 +48,12 @@ class CalculateNextOccurrence @Inject constructor(
                     val day = (alarm.dayOfMonth ?: 1).coerceAtMost(current.lengthOfMonth())
                     LocalDateTime.of(current.withDayOfMonth(day), time)
                 }
-                RecurrenceType.ONE_TIME -> null
+                RecurrenceType.ONE_TIME -> {
+                    val candidate = LocalDateTime.of(current, time)
+                    if (candidate.isAfter(now)) candidate else null
+                }
             }
-            if (candidate != null && candidate.isAfter(now) && candidate.toLocalDate() !in holidays) {
+            if (candidate != null && candidate.isAfter(now) && (!alarm.skipHolidays || candidate.toLocalDate() !in holidays)) {
                 return toEpochMillis(candidate)
             }
             current = when (alarm.recurrenceType) {
