@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -36,7 +37,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -72,34 +73,62 @@ fun AlarmEditorScreen(
 
     if (showTimePicker) {
         val timeState = rememberTimePickerState(
-            initialHour = state.hour, initialMinute = state.minute, is24Hour = false
+            initialHour = state.hour, initialMinute = state.minute, is24Hour = true
         )
-        val context = androidx.compose.ui.platform.LocalContext.current
-        val enContext = remember(context) {
-            val config = android.content.res.Configuration(context.resources.configuration)
-            config.setLocale(java.util.Locale.ENGLISH)
-            if (android.os.Build.VERSION.SDK_INT >= 24) {
-                config.setLocales(android.os.LocaleList(java.util.Locale.ENGLISH))
-            }
-            context.createConfigurationContext(config)
-        }
-        CompositionLocalProvider(androidx.compose.ui.platform.LocalContext provides enContext) {
-            androidx.compose.material3.AlertDialog(
-                onDismissRequest = { showTimePicker = false },
-                title = { Text("Select Time") },
-                text = { TimePicker(state = timeState) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        viewModel.updateHour(timeState.hour)
-                        viewModel.updateMinute(timeState.minute)
-                        showTimePicker = false
-                    }) { Text("OK") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text("Select Time") },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TimePicker(
+                        state = timeState,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val isPm = timeState.hour >= 12
+                        FilterChip(
+                            selected = !isPm,
+                            onClick = {
+                                if (timeState.hour >= 12) {
+                                    timeState.hour = if (timeState.hour == 12) 0
+                                        else timeState.hour - 12
+                                }
+                            },
+                            label = { Text("AM") }
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        FilterChip(
+                            selected = isPm,
+                            onClick = {
+                                if (timeState.hour < 12) {
+                                    timeState.hour = if (timeState.hour == 0) 12
+                                        else timeState.hour + 12
+                                }
+                            },
+                            label = { Text("PM") }
+                        )
+                    }
                 }
-            )
-        }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.updateHour(timeState.hour)
+                    viewModel.updateMinute(timeState.minute)
+                    showTimePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+            }
+        )
     }
 
     if (showDatePicker) {

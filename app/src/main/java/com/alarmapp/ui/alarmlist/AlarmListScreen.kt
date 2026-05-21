@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.SortByAlpha
@@ -52,7 +51,6 @@ fun AlarmListScreen(
     onAddAlarm: () -> Unit,
     onEditAlarm: (Long) -> Unit,
     onManageHolidays: () -> Unit,
-    onDebug: () -> Unit,
     viewModel: AlarmListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -65,9 +63,6 @@ fun AlarmListScreen(
                 actions = {
                     IconButton(onClick = onManageHolidays) {
                         Icon(Icons.Default.CalendarMonth, contentDescription = "Holidays")
-                    }
-                    IconButton(onClick = onDebug) {
-                        Icon(Icons.Default.BugReport, contentDescription = "Debug")
                     }
                     SortButton(sortType) { viewModel.setSortType(it) }
                 }

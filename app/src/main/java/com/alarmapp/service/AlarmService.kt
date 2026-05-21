@@ -18,13 +18,11 @@ import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import com.alarmapp.domain.repository.AlarmRepository
 import com.alarmapp.receiver.AlarmReceiver
-import com.alarmapp.util.InAppDebugLogger
 import com.alarmapp.ui.alarmring.AlarmRingActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -40,8 +38,6 @@ class AlarmService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        InAppDebugLogger.log("AlarmService", "onCreate")
-        Timber.d("AlarmService.onCreate")
         createNotificationChannel()
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -59,22 +55,15 @@ class AlarmService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        InAppDebugLogger.log("AlarmService", "onStartCommand called")
-        Timber.d("AlarmService.onStartCommand called with intent: %s", intent)
 
         val alarmId = intent?.getLongExtra("alarm_id", -1L) ?: -1L
         currentAlarmId = alarmId
         shouldReleaseReceiverWakelock = intent?.getBooleanExtra("release_wakelock", false) ?: false
         
         if (alarmId == -1L) {
-            InAppDebugLogger.log("AlarmService", "Invalid alarm_id - stopping self", com.alarmapp.util.LogLevel.ERROR)
-            Timber.w("AlarmService started with invalid alarm_id")
             stopSelf()
             return START_NOT_STICKY
         }
-        
-        InAppDebugLogger.log("AlarmService", "Starting alarm $alarmId")
-        Timber.d("Starting alarm %d, shouldReleaseReceiverWakelock: %b", alarmId, shouldReleaseReceiverWakelock)
 
         // Acquire our own wakelock
         keepAwake?.acquire(60_000L)
@@ -86,26 +75,15 @@ class AlarmService : Service() {
                 val alarm = alarmRepository.getAlarmById(alarmId)
                 if (alarm != null) {
                     val description = alarm.description.ifBlank { "Alarm" }
-                    InAppDebugLogger.log("AlarmService", "DB lookup success for alarm $alarmId: $description")
-                    Timber.d("DB lookup success: alarm %d: %s", alarmId, description)
                     showNotification(description)
-                } else {
-                    InAppDebugLogger.log("AlarmService", "Alarm $alarmId not found in DB", com.alarmapp.util.LogLevel.WARN)
-                    Timber.w("Alarm %d not found in database", alarmId)
                 }
-            } catch (e: Exception) {
-                InAppDebugLogger.logError("AlarmService", "DB error for alarm $alarmId", e)
-                Timber.e(e, "Error getting alarm %d from database", alarmId)
-            }
+            } catch (_: Exception) { }
         }
 
         startAlarm()
 
-        // Release the receiver's wakelock only after we've acquired our own
         if (shouldReleaseReceiverWakelock) {
             AlarmReceiver.releaseWakeLock()
-            InAppDebugLogger.log("AlarmService", "Released receiver wakelock for alarm $alarmId")
-            Timber.d("Released receiver wakelock for alarm %d", alarmId)
         }
 
         return START_NOT_STICKY
@@ -135,23 +113,14 @@ class AlarmService : Service() {
                 .build()
 
             startForeground(NOTIFICATION_ID, notification)
-            InAppDebugLogger.log("AlarmService", "Foreground notification started for alarm $_alarmId")
-            Timber.d("Started foreground notification for alarm %d", _alarmId)
-        } catch (e: Exception) {
-            InAppDebugLogger.logError("AlarmService", "Error showing notification for alarm $currentAlarmId", e)
-        }
+        } catch (_: Exception) { }
     }
 
     private fun startAlarm() {
         try {
-            InAppDebugLogger.log("AlarmService", "Starting sound and vibration for alarm $currentAlarmId")
-            Timber.d("Starting alarm sound and vibration for alarm %d", currentAlarmId)
             playSound()
             vibrate()
-        } catch (e: Exception) {
-            InAppDebugLogger.logError("AlarmService", "Error starting alarm", e)
-            Timber.e(e, "Error starting alarm for alarm %d", currentAlarmId)
-        }
+        } catch (_: Exception) { }
     }
 
     private fun playSound() {
@@ -169,12 +138,7 @@ class AlarmService : Service() {
                 prepare()
                 start()
             }
-            InAppDebugLogger.log("AlarmService", "Sound started for alarm $currentAlarmId")
-            Timber.d("Started alarm sound for alarm %d", currentAlarmId)
-        } catch (e: Exception) {
-            InAppDebugLogger.logError("AlarmService", "Error playing sound", e)
-            Timber.e(e, "Error playing alarm sound for alarm %d", currentAlarmId)
-        }
+        } catch (_: Exception) { }
     }
 
     private fun vibrate() {
@@ -188,18 +152,11 @@ class AlarmService : Service() {
                 @Suppress("DEPRECATION")
                 vibrator?.vibrate(pattern, 0)
             }
-            InAppDebugLogger.log("AlarmService", "Vibration started for alarm $currentAlarmId")
-            Timber.d("Started vibration for alarm %d", currentAlarmId)
-        } catch (e: Exception) {
-            InAppDebugLogger.logError("AlarmService", "Error vibrating", e)
-            Timber.e(e, "Error vibrating for alarm %d", currentAlarmId)
-        }
+        } catch (_: Exception) { }
     }
 
     fun stopAlarm() {
         try {
-            InAppDebugLogger.log("AlarmService", "Stopping alarm $currentAlarmId")
-            Timber.d("Stopping alarm %d", currentAlarmId)
             mediaPlayer?.apply {
                 if (isPlaying) stop()
                 release()
@@ -209,32 +166,24 @@ class AlarmService : Service() {
             keepAwake?.takeIf { it.isHeld }?.release()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
-        } catch (e: Exception) {
-            InAppDebugLogger.logError("AlarmService", "Error stopping alarm", e)
-            Timber.e(e, "Error stopping alarm %d", currentAlarmId)
-        }
+        } catch (_: Exception) { }
     }
 
     override fun onBind(intent: Intent): IBinder? = null
 
     override fun onDestroy() {
         try {
-            InAppDebugLogger.log("AlarmService", "onDestroy for alarm $currentAlarmId")
-            Timber.d("AlarmService.onDestroy for alarm %d", currentAlarmId)
             mediaPlayer?.release()
             mediaPlayer = null
             vibrator?.cancel()
             keepAwake?.takeIf { it.isHeld }?.release()
             
-            // Make sure to release receiver wakelock if we haven't already
             if (shouldReleaseReceiverWakelock) {
                 AlarmReceiver.releaseWakeLock()
             }
             
             super.onDestroy()
-        } catch (e: Exception) {
-            Timber.e(e, "Error in AlarmService.onDestroy")
-        }
+        } catch (_: Exception) { }
     }
 
     private fun createNotificationChannel() {
@@ -248,11 +197,7 @@ class AlarmService : Service() {
             }
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(channel)
-            InAppDebugLogger.log("AlarmService", "Notification channel created")
-            Timber.d("Created notification channel")
-        } catch (e: Exception) {
-            InAppDebugLogger.logError("AlarmService", "Error creating notification channel", e)
-        }
+        } catch (_: Exception) { }
     }
 
     companion object {

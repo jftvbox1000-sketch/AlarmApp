@@ -36,7 +36,7 @@ android {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
+    val composeBom = platform("androidx.compose:compose-bom:2024.10.00")
     implementation(composeBom)
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui")
@@ -59,5 +59,5 @@ dependencies {
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     
     // Logging
-    implementation("com.jakewharton.timber:timber:5.0.1")
+
 }

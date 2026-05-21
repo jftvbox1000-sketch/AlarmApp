@@ -32,7 +32,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -48,13 +47,11 @@ class AlarmRingActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("AlarmRingActivity.onCreate called with intent: %s", intent)
 
         alarmId = intent.getLongExtra("alarm_id", -1L)
         descriptionState.value = intent.getStringExtra("description") ?: "Alarm"
 
         if (alarmId == -1L) {
-            Timber.w("AlarmRingActivity started with invalid alarm_id")
             finish()
             return
         }
@@ -64,9 +61,7 @@ class AlarmRingActivity : ComponentActivity() {
                 alarmRepository.getAlarmById(alarmId)?.let { alarm ->
                     descriptionState.value = alarm.description.ifBlank { "Alarm" }
                 }
-            } catch (e: Exception) {
-                Timber.e(e, "Error loading alarm description for %d", alarmId)
-            }
+            } catch (_: Exception) { }
         }
 
         setContent {
@@ -80,7 +75,6 @@ class AlarmRingActivity : ComponentActivity() {
 
     private fun dismissAlarm() {
         try {
-            Timber.d("Dismissing alarm %d", alarmId)
             CoroutineScope(Dispatchers.IO).launch {
                 val alarm = alarmRepository.getAlarmById(alarmId)
                 if (alarm != null) {
@@ -88,28 +82,19 @@ class AlarmRingActivity : ComponentActivity() {
                         val nextTime = calculateNextOccurrence(alarm)
                         if (nextTime != null) {
                             scheduleAlarm.schedule(alarm, nextTime)
-                            Timber.d("Scheduled next occurrence for recurring alarm %d", alarmId)
-                        } else {
-                            Timber.w("No next occurrence found for recurring alarm %d", alarmId)
                         }
                     } else {
                         alarmRepository.toggleAlarm(alarmId, false)
-                        Timber.d("Disabled one-time alarm %d", alarmId)
                     }
-                } else {
-                    Timber.w("Alarm %d not found when dismissing", alarmId)
                 }
             }
             stopAlarmService()
             finish()
-        } catch (e: Exception) {
-            Timber.e(e, "Error dismissing alarm %d", alarmId)
-        }
+        } catch (_: Exception) { }
     }
 
     private fun snoozeAlarm() {
         try {
-            Timber.d("Snoozing alarm %d", alarmId)
             val snoozeTime = LocalDateTime.now().plusMinutes(5)
             val triggerMillis = snoozeTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
             val snoozeIntent = Intent(this, AlarmReceiver::class.java).apply {
@@ -117,7 +102,6 @@ class AlarmRingActivity : ComponentActivity() {
                 putExtra("alarm_id", alarmId)
             }
             
-            // Use a unique request code for snooze
             val requestCode = ((alarmId * 1000 + 999) and 0x7FFFFFFF).toInt()
             val pendingIntent = android.app.PendingIntent.getBroadcast(
                 this, requestCode, snoozeIntent,
@@ -129,30 +113,22 @@ class AlarmRingActivity : ComponentActivity() {
                     alarmManager.setExactAndAllowWhileIdle(
                         android.app.AlarmManager.RTC_WAKEUP, triggerMillis, pendingIntent
                     )
-                    Timber.d("Scheduled snooze alarm %d with setExactAndAllowWhileIdle at %d", alarmId, triggerMillis)
                 } else {
                     alarmManager.set(android.app.AlarmManager.RTC_WAKEUP, triggerMillis, pendingIntent)
-                    Timber.w("Scheduled snooze alarm %d with set (no exact alarm permission) at %d", alarmId, triggerMillis)
                 }
             } else {
                 alarmManager.setExact(android.app.AlarmManager.RTC_WAKEUP, triggerMillis, pendingIntent)
-                Timber.d("Scheduled snooze alarm %d with setExact (pre-S) at %d", alarmId, triggerMillis)
             }
             stopAlarmService()
             finish()
-        } catch (e: Exception) {
-            Timber.e(e, "Error snoozing alarm %d", alarmId)
-        }
+        } catch (_: Exception) { }
     }
 
     private fun stopAlarmService() {
         try {
             val intent = Intent(this, AlarmService::class.java)
             stopService(intent)
-            Timber.d("Stopped AlarmService for alarm %d", alarmId)
-        } catch (e: Exception) {
-            Timber.e(e, "Error stopping AlarmService for alarm %d", alarmId)
-        }
+        } catch (_: Exception) { }
     }
 }
 

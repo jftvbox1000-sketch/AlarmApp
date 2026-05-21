@@ -8,14 +8,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.alarmapp.ui.alarmeditor.AlarmEditorScreen
 import com.alarmapp.ui.alarmlist.AlarmListScreen
-import com.alarmapp.ui.debug.DebugScreen
 import com.alarmapp.ui.holiday.HolidayScreen
 
 object Routes {
     const val ALARM_LIST = "alarm_list"
     const val ALARM_EDITOR = "alarm_editor?alarmId={alarmId}"
     const val HOLIDAY_MANAGER = "holiday_manager"
-    const val DEBUG = "debug"
 
     fun alarmEditor(alarmId: Long? = null) =
         if (alarmId != null) "alarm_editor?alarmId=$alarmId" else "alarm_editor"
@@ -30,8 +28,7 @@ fun AlarmNavHost() {
             AlarmListScreen(
                 onAddAlarm = { navController.navigate(Routes.alarmEditor()) },
                 onEditAlarm = { id -> navController.navigate(Routes.alarmEditor(id)) },
-                onManageHolidays = { navController.navigate(Routes.HOLIDAY_MANAGER) },
-                onDebug = { navController.navigate(Routes.DEBUG) }
+                onManageHolidays = { navController.navigate(Routes.HOLIDAY_MANAGER) }
             )
         }
         composable(
@@ -49,9 +46,6 @@ fun AlarmNavHost() {
         }
         composable(Routes.HOLIDAY_MANAGER) {
             HolidayScreen(onNavigateBack = { navController.popBackStack() })
-        }
-        composable(Routes.DEBUG) {
-            DebugScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
 }

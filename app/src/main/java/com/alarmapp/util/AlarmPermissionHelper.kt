@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import timber.log.Timber
 
 object AlarmPermissionHelper {
     
@@ -52,11 +51,4 @@ object AlarmPermissionHelper {
         }
     }
     
-    /**
-     * Log current permission status
-     */
-    fun logPermissionStatus(context: Context) {
-        Timber.d("Battery optimization exempt: ${isIgnoringBatteryOptimizations(context)}")
-        Timber.d("Can schedule exact alarms: ${canScheduleExactAlarms(context)}")
-    }
 }
