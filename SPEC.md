@@ -1,4 +1,4 @@
-# AlarmApp — Specification
+#  AlarmApp — Specification
 
 ## Overview
 Android alarm clock app built with **Kotlin + Jetpack Compose**. Uses clean architecture (data/domain/ui layers).
