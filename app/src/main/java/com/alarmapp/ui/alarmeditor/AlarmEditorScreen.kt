@@ -36,6 +36,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -71,23 +72,34 @@ fun AlarmEditorScreen(
 
     if (showTimePicker) {
         val timeState = rememberTimePickerState(
-            initialHour = state.hour, initialMinute = state.minute, is24Hour = true
+            initialHour = state.hour, initialMinute = state.minute, is24Hour = false
         )
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showTimePicker = false },
-            title = { Text("Select Time") },
-            text = { TimePicker(state = timeState) },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.updateHour(timeState.hour)
-                    viewModel.updateMinute(timeState.minute)
-                    showTimePicker = false
-                }) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val enContext = remember(context) {
+            val config = android.content.res.Configuration(context.resources.configuration)
+            config.setLocale(java.util.Locale.ENGLISH)
+            if (android.os.Build.VERSION.SDK_INT >= 24) {
+                config.setLocales(android.os.LocaleList(java.util.Locale.ENGLISH))
             }
-        )
+            context.createConfigurationContext(config)
+        }
+        CompositionLocalProvider(androidx.compose.ui.platform.LocalContext provides enContext) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showTimePicker = false },
+                title = { Text("Select Time") },
+                text = { TimePicker(state = timeState) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.updateHour(timeState.hour)
+                        viewModel.updateMinute(timeState.minute)
+                        showTimePicker = false
+                    }) { Text("OK") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+                }
+            )
+        }
     }
 
     if (showDatePicker) {
@@ -138,7 +150,9 @@ fun AlarmEditorScreen(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedButton(onClick = { showTimePicker = true }) {
-                    Text("${String.format("%02d", state.hour)}:${String.format("%02d", state.minute)}")
+                    val hour12 = when { state.hour == 0 -> 12; state.hour > 12 -> state.hour - 12; else -> state.hour }
+                    val amPm = if (state.hour < 12) "AM" else "PM"
+                    Text("${hour12}:${String.format("%02d", state.minute)} $amPm")
                 }
                 Spacer(Modifier.width(8.dp))
                 Text("tap to change", style = MaterialTheme.typography.bodySmall)

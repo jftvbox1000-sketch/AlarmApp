@@ -125,7 +125,7 @@ class AlarmService : Service() {
             )
 
             val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("Alarm")
+                .setContentTitle(description)
                 .setContentText(description)
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                 .setPriority(NotificationCompat.PRIORITY_MAX)

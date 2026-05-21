@@ -5,6 +5,8 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,26 +44,34 @@ class AlarmRingActivity : ComponentActivity() {
     @Inject lateinit var scheduleAlarm: ScheduleAlarm
 
     private var alarmId: Long = -1L
-    private var description: String = ""
+    private val descriptionState = mutableStateOf("")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.d("AlarmRingActivity.onCreate called with intent: %s", intent)
-        
+
         alarmId = intent.getLongExtra("alarm_id", -1L)
-        description = intent.getStringExtra("description") ?: "Alarm"
-        
+        descriptionState.value = intent.getStringExtra("description") ?: "Alarm"
+
         if (alarmId == -1L) {
             Timber.w("AlarmRingActivity started with invalid alarm_id")
             finish()
             return
         }
-        
-        Timber.d("Showing alarm ring UI for alarm %d: %s", alarmId, description)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                alarmRepository.getAlarmById(alarmId)?.let { alarm ->
+                    descriptionState.value = alarm.description.ifBlank { "Alarm" }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error loading alarm description for %d", alarmId)
+            }
+        }
 
         setContent {
             AlarmRingScreen(
-                description = description,
+                description = descriptionState.value,
                 onDismiss = { dismissAlarm() },
                 onSnooze = { snoozeAlarm() }
             )
@@ -158,14 +168,15 @@ private fun AlarmRingScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "ALARM",
+            text = description,
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.error
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(8.dp))
         Text(
-            text = description,
-            style = MaterialTheme.typography.headlineSmall
+            text = "ALARM",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(48.dp))
         Button(
